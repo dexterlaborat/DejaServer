@@ -37,9 +37,9 @@ class DejaServer(BaseHTTPRequestHandler):
            # print("{} {} {}".format(data['path'],data['Method'],data['ReceivedTime'],data['Processing Time'],data['query']))
             w.write("{},{},{},{}\n".format(data['path'],data['Method'],data['ReceivedTime'],data['Processing Time'],data['query']))
    
-    def ge_stats(self):
+    def get_stats(self):
         df=pd.read_csv('temp.csv')
-        import pdb;pdb.set_trace()
+      #  import pdb;pdb.set_trace()
         
     def handler404(self):
         self.send_response(404)
