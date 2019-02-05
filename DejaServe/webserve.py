@@ -14,10 +14,17 @@ port_num=8080
 hostName="localhost"
 
 class DejaServer(BaseHTTPRequestHandler):
-    def __init__(self):
-        super().__init__()
-        import pdb;pdb.set_trace()
+    '''
+    def __init__(self,request,client_address,server):
+        super().__init__(self,request,client_address,server)
+        #import pdb;pdb.set_trace()
         if os.system('ls | grep "temp.csv"') == 'temp.csv' :
+            os.system('rm -rf temp.csv')
+        else:
+            os.system('touch temp.csv')
+'''
+    def build():
+        if os.system('ls | grep "temp.csv"') == 'temp.csv':
             os.system('rm -rf temp.csv')
         else:
             os.system('touch temp.csv')
@@ -132,8 +139,9 @@ class DejaServer(BaseHTTPRequestHandler):
         self.log_requests(data)
 
 if __name__=='__main__':
-    DejaServer((hostName,port_num),DejaServer)
+    DejaServer(request,(hostName,port_num),DejaServer)
     #dejaSer.buildnew()
+    #print(self.request)
     mServer = HTTPServer((hostName,port_num),DejaServer)
     print(time.asctime(), "Server started as  %s:%s" % (hostName,port_num))
 
