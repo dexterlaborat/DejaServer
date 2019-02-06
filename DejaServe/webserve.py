@@ -1,4 +1,3 @@
-import requests
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import time
 import random
@@ -8,26 +7,11 @@ import os
 import datetime
 import operator
 import pandas as pd
-from matplotlib import pyplot as plt
 
 port_num=8080
 hostName="localhost"
 
 class DejaServer(BaseHTTPRequestHandler):
-    '''
-    def __init__(self,request,client_address,server):
-        super().__init__(self,request,client_address,server)
-        #import pdb;pdb.set_trace()
-        if os.system('ls | grep "temp.csv"') == 'temp.csv' :
-            os.system('rm -rf temp.csv')
-        else:
-            os.system('touch temp.csv')
-'''
-    def build():
-        if os.system('ls | grep "temp.csv"') == 'temp.csv':
-            os.system('rm -rf temp.csv')
-        else:
-            os.system('touch temp.csv')
 
     def add_response(self,query=None):
         recieve_time = time.time()
@@ -62,21 +46,27 @@ class DejaServer(BaseHTTPRequestHandler):
             w.write("{},{},{},{}\n".format(data['path'],data['Method'],data['ReceivedTime'],data['Processing Time'],data['query']))
    
     def get_stats(self):
-        df=pd.read_csv('temp.csv')
-        column=['path','method','receiving_date','processing_time']
-        df.columns=column
-        current_date=datetime.datetime.now()
-        df['receiving_date'] = pd.to_datetime(df['receiving_date'])
-        process_time=list(map(self.resp_calc,df['processing_time']))
-        df['processing_time']=pd.Series(map(float,process_time))
-        avg_response=sum(df['processing_time'])/len(df['processing_time'])
-        _hours=list(map(self.last_hour,df['receiving_date']))
-        _minutes=list(map(self.last_minute,df['receiving_date']))
-        total_request=len(df['method']) 
-        total_get_req=len(df[df['method'] == 'GET'])
-        total_post_req=len(df[df['method'] == 'POST'])
-        return '{"Total" : "%s", "GET" : "%s", "POST" : "%s", "Average Response" : "%s", "Last Hour" : "%s", "Last Minute" : "%s"}' % (total_request,total_get_req,total_post_req,round(avg_response,2),len(df[_hours]),len(df[_minutes]))
-
+        try:
+            df=pd.read_csv('temp.csv')
+            column=['path','method','receiving_date','processing_time']
+            df.columns=column
+            current_date=datetime.datetime.now()
+            df['receiving_date'] = pd.to_datetime(df['receiving_date'])
+            process_time=list(map(self.resp_calc,df['processing_time']))
+            df['processing_time']=pd.Series(map(float,process_time))
+            avg_response=sum(df['processing_time'])/len(df['processing_time'])
+            _hours=list(map(self.last_hour,df['receiving_date']))
+            _minutes=list(map(self.last_minute,df['receiving_date']))
+            total_request=len(df['method']) 
+            total_get_req=len(df[df['method'] == 'GET'])
+            total_post_req=len(df[df['method'] == 'POST'])
+            total_put_req=len(df[df['method'] == 'PUT'])
+            total_del_req=len(df[df['method'] == 'DELETE'])
+            return '{"Total" : "%s", "GET" : "%s", "POST" : "%s", "PUT" : "%s", "DELETE" : "%s", "Average Response" : "%s", "Last Hour" : "%s", "Last Minute" : "%s"}' % (total_request,total_get_req,total_post_req,total_put_req,total_del_req,round(avg_response,2),len(df[_hours]),len(df[_minutes]))
+        except pd.errors.EmptyDataError:
+            self.wfile.write(b'No Logs To Make Stats. Try to make some request for real time stats')
+        except Exception as e:
+            self.wfile.write(b'Unexpected Error Occured!!!')
         
     def handler404(self):
         self.send_response(404)
@@ -94,14 +84,14 @@ class DejaServer(BaseHTTPRequestHandler):
             data = self.add_response()
             self.wfile.write(bytes(str(data), 'utf-8'))
             self.log_requests(data)
-           #self.wfile.write(bytes(str(self.path), 'utf-8'))
         elif self.path == '/stats':
             self.send_response(200)
             self.add_headers()
             self.end_headers()
             time.sleep(random.random() * 10) 
             data = self.get_stats()
-            self.wfile.write(bytes(str(data), 'utf-8'))
+            if data is not None:
+                self.wfile.write(bytes(str(data), 'utf-8'))
         else:
             self.handler404()
 
@@ -109,11 +99,15 @@ class DejaServer(BaseHTTPRequestHandler):
         self.send_response(200)
         self.add_headers()
         self.end_headers()
+        import pdb;pdb.set_trace();
         form = cgi.FieldStorage(fp=self.rfile,headers=self.headers,environ={'REQUEST_METHOD': 'POST'})
-        query = form.getvalue("data")
+        if form.getvalue("data"):
+            query = form.getvalue("data")
+        else:
+            pass
+            #import pdb;pdb.set_trace();
+            query = ''
         data=self.add_response(query)
-     #   dt=json.loads(data)
-    #iprint(dt)
         self.wfile.write(bytes(str(data), 'utf-8'))
         self.log_requests(data)
 
@@ -139,9 +133,12 @@ class DejaServer(BaseHTTPRequestHandler):
         self.log_requests(data)
 
 if __name__=='__main__':
-    DejaServer(request,(hostName,port_num),DejaServer)
-    #dejaSer.buildnew()
-    #print(self.request)
+    if os.system('ls | grep "temp.csv"') == 0:
+        #import pdb;pdb.set_trace();
+        os.system('rm -rf "temp.csv"')
+        os.system('touch temp.csv')
+    else:
+        os.system('touch temp.csv')
     mServer = HTTPServer((hostName,port_num),DejaServer)
     print(time.asctime(), "Server started as  %s:%s" % (hostName,port_num))
 
