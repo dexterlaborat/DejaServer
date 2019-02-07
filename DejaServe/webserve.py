@@ -99,7 +99,6 @@ class DejaServer(BaseHTTPRequestHandler):
         self.send_response(200)
         self.add_headers()
         self.end_headers()
-        import pdb;pdb.set_trace();
         form = cgi.FieldStorage(fp=self.rfile,headers=self.headers,environ={'REQUEST_METHOD': 'POST'})
         if form.getvalue("data"):
             query = form.getvalue("data")
